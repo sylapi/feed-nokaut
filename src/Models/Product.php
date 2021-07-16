@@ -315,12 +315,8 @@ class Product implements ProductSerializer
      * Get the value of productCategory
      */ 
     public function getProductCategory()
-    {
-        if(isset($this->productCategory[Feed::NAME])) {
-            return $this->productCategory[Feed::NAME];
-        }
-        
-        return null;
+    {   
+        return $this->productCategory;
     }
 
     /**
@@ -519,7 +515,7 @@ class Product implements ProductSerializer
      * @Serializer\VirtualProperty
      * @Serializer\XmlMap(inline = true, entry = "property", keyAttribute = "name")
      * @Serializer\XmlElement(cdata=false)
-     * @return string
+     * @return array<string, mixed>
      */
     public function getProperties()
     {
@@ -574,15 +570,25 @@ class Product implements ProductSerializer
 
             if(method_exists($product, $getterName) && method_exists($item, $setterName)) {
                 $elem =  $product->{$getterName}();
-                if(isset($elem[Feed::NAME]) 
-                    && is_array($elem[Feed::NAME]) 
-                    && $itemVar === 'productDetails'
-                ) {                
-                    $elems = [];
-                    foreach($elem[Feed::NAME] as $pd){
-                        $elems[] = (new ProductDetail)->make($pd);
+
+                if($itemVar === 'productCategory') {
+                    if(is_array($elem) && isset($elem[Feed::NAME])) {
+                        $elem = $elem[Feed::NAME];
+                    } else {
+                        $elem = null;
                     }
-                    $elem = $elems;
+                }
+
+                if($itemVar === 'productDetails') {
+                    if(isset($elem[Feed::NAME]) && is_array($elem[Feed::NAME])) {
+                        $elems = [];
+                        foreach($elem[Feed::NAME] as $pd){
+                            $elems[] = (new ProductDetail)->make($pd);
+                        }
+                        $elem = $elems;
+                    } else {
+                        $elem = null;
+                    }
                 }
 
                 $item->{$setterName}($elem);  
